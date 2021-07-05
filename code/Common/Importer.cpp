@@ -56,7 +56,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 // ------------------------------------------------------------------------------------------------
 #ifndef ASSIMP_BUILD_DEBUG
-#   define ASSIMP_CATCH_GLOBAL_EXCEPTIONS
+#   define ASSIMP_CATCH_GLOBAL_EXCEPTIONS	//异常
 #endif
 
 // ------------------------------------------------------------------------------------------------
@@ -587,6 +587,7 @@ const aiScene* Importer::ReadFile( const char* _pFile, unsigned int pFlags) {
     // Put a large try block around everything to catch all std::exception's
     // that might be thrown by STL containers or by new().
     // ImportErrorException's are throw by ourselves and caught elsewhere.
+	//抛出一个巨大的异常检测模块
     //-----------------------------------------------------------------------
 
     WriteLogOpening(pFile);

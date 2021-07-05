@@ -192,55 +192,57 @@ std::string ObjExporter::GetMaterialName(unsigned int index) {
 }
 
 // ------------------------------------------------------------------------------------------------
-void ObjExporter::WriteMaterialFile() {
-    WriteHeader(mOutputMat);
+//参考《Obj模型之mtl文件格式》：https://www.jianshu.com/p/afa7ffa01191
+void ObjExporter::WriteMaterialFile() {//写出材质文件
+    WriteHeader(mOutputMat);//材质文件头注释
 
-    for(unsigned int i = 0; i < pScene->mNumMaterials; ++i) {
-        const aiMaterial* const mat = pScene->mMaterials[i];
+    for(unsigned int i = 0; i < pScene->mNumMaterials; ++i) {//逐个材质处理
+        const aiMaterial* const mat = pScene->mMaterials[i];//获取材质文件
 
-        int illum = 1;
-        mOutputMat << "newmtl " << GetMaterialName(i)  << endl;
+        int illum = 1;//照明度，1表示Color on and Ambient on
+        mOutputMat << "newmtl " << GetMaterialName(i)  << endl;//材质文件名
 
-        aiColor4D c;
-        if(AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_DIFFUSE,c)) {
+        aiColor4D c;//向量类型的值
+        if(AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_DIFFUSE,c)) {	//散射光（diffuse color）用Kd
             mOutputMat << "Kd " << c.r << " " << c.g << " " << c.b << endl;
         }
-        if(AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_AMBIENT,c)) {
+        if(AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_AMBIENT,c)) {	//材质的环境光（ambient color）
             mOutputMat << "Ka " << c.r << " " << c.g << " " << c.b << endl;
         }
-        if(AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_SPECULAR,c)) {
+        if(AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_SPECULAR,c)) {	//镜面光（specular color）用Ks
             mOutputMat << "Ks " << c.r << " " << c.g << " " << c.b << endl;
         }
-        if(AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_EMISSIVE,c)) {
+        if(AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_EMISSIVE,c)) { //放射光
             mOutputMat << "Ke " << c.r << " " << c.g << " " << c.b << endl;
         }
-        if(AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_TRANSPARENT,c)) {
+        if(AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_TRANSPARENT,c)) {	//滤光透射率
             mOutputMat << "Tf " << c.r << " " << c.g << " " << c.b << endl;
         }
 
-        ai_real o;
-        if(AI_SUCCESS == mat->Get(AI_MATKEY_OPACITY,o)) {
+        ai_real o;//float类型的值
+        if(AI_SUCCESS == mat->Get(AI_MATKEY_OPACITY,o)) {	//渐隐指数
             mOutputMat << "d " << o << endl;
         }
-        if(AI_SUCCESS == mat->Get(AI_MATKEY_REFRACTI,o)) {
+        if(AI_SUCCESS == mat->Get(AI_MATKEY_REFRACTI,o)) {	//折射值描述
             mOutputMat << "Ni " << o << endl;
         }
 
-        if(AI_SUCCESS == mat->Get(AI_MATKEY_SHININESS,o) && o) {
+        if(AI_SUCCESS == mat->Get(AI_MATKEY_SHININESS,o) && o) {	//反射指数
             mOutputMat << "Ns " << o << endl;
-            illum = 2;
+            illum = 2; //照明度，2表示Highlight on
         }
 
-        mOutputMat << "illum " << illum << endl;
+        mOutputMat << "illum " << illum << endl; //照明度
 
+		//以下是mtl文件中对于纹理映射的描述格式
         aiString s;
-        if(AI_SUCCESS == mat->Get(AI_MATKEY_TEXTURE_DIFFUSE(0),s)) {
+        if(AI_SUCCESS == mat->Get(AI_MATKEY_TEXTURE_DIFFUSE(0),s)) {//为漫反射指定颜色纹理文件
             mOutputMat << "map_Kd " << s.data << endl;
         }
-        if(AI_SUCCESS == mat->Get(AI_MATKEY_TEXTURE_AMBIENT(0),s)) {
+        if(AI_SUCCESS == mat->Get(AI_MATKEY_TEXTURE_AMBIENT(0),s)) {//为环境反射指定颜色纹理文件
             mOutputMat << "map_Ka " << s.data << endl;
         }
-        if(AI_SUCCESS == mat->Get(AI_MATKEY_TEXTURE_SPECULAR(0),s)) {
+        if(AI_SUCCESS == mat->Get(AI_MATKEY_TEXTURE_SPECULAR(0),s)) {//为镜反射指定颜色纹理文件
             mOutputMat << "map_Ks " << s.data << endl;
         }
         if(AI_SUCCESS == mat->Get(AI_MATKEY_TEXTURE_SHININESS(0),s)) {
@@ -270,7 +272,7 @@ void ObjExporter::WriteGeometryFile(bool noMtl) {
 
     // write vertex positions with colors, if any
     mVpMap.getKeys( vp );//输出顶点坐标（如果包含颜色同时输出颜色）
-    if ( !useVc ) {
+    if ( !useVc ) { //不适用顶点颜色
         mOutput << "# " << vp.size() << " vertex positions" << endl;
         for ( const vertexData& v : vp ) {
             mOutput << "v  " << v.vp.x << " " << v.vp.y << " " << v.vp.z << endl;
@@ -300,28 +302,28 @@ void ObjExporter::WriteGeometryFile(bool noMtl) {
     mOutput << endl;
 
     // now write all mesh instances  //写出所有mesh索引
-    for(const MeshInstance& m : mMeshes) {
+    for(const MeshInstance& m : mMeshes) {//逐个mesh处理
         mOutput << "# Mesh \'" << m.name << "\' with " << m.faces.size() << " faces" << endl;
-        if (!m.name.empty()) {
+        if (!m.name.empty()) { //mesh名不为空时输出名字
             mOutput << "g " << m.name << endl;
         }
-        if ( !noMtl ) {
+        if ( !noMtl ) {//若无材质则输出材质名
             mOutput << "usemtl " << m.matname << endl;//纹理坐标名称
         }
 
-        for(const Face& f : m.faces) {  //写出面
-            mOutput << f.kind << ' ';
-            for(const FaceVertex& fv : f.indices) {
-                mOutput << ' ' << fv.vp;
+        for(const Face& f : m.faces) {  //逐个面写出：“f  1//1 2//2 3//3”
+            mOutput << f.kind << ' ';//该单元面类型信息
+            for(const FaceVertex& fv : f.indices) {//逐个面索引写出
+                mOutput << ' ' << fv.vp;//面顶点
 
                 if (f.kind != 'p') {
-                    if (fv.vt || f.kind == 'f') {
+                    if (fv.vt || f.kind == 'f') {//如果有vt信息，或者类型是“f”，添加“/”
                         mOutput << '/';
                     }
-                    if (fv.vt) {
+                    if (fv.vt) {//写出vt（注意这里逻辑，f一定要添加“/”）
                         mOutput << fv.vt;
                     }
-                    if (f.kind == 'f' && fv.vn) {
+                    if (f.kind == 'f' && fv.vn) {//如果有vn信息，写出vn
                         mOutput << '/' << fv.vn;
                     }
                 }
@@ -335,23 +337,23 @@ void ObjExporter::WriteGeometryFile(bool noMtl) {
 
 // ------------------------------------------------------------------------------------------------
 void ObjExporter::AddMesh(const aiString& name, const aiMesh* m, const aiMatrix4x4& mat) {
-    mMeshes.push_back(MeshInstance() );
+    mMeshes.push_back(MeshInstance() );//构造一个新的mesh放入mMeshes列表中
     MeshInstance& mesh = mMeshes.back();//最后一个mesh的索引
 
-    if ( nullptr != m->mColors[ 0 ] ) {
-        useVc = true;
+    if ( nullptr != m->mColors[ 0 ] ) {	//mColors存在
+        useVc = true;//使用顶点颜色
     }
 
-    mesh.name = std::string( name.data, name.length );
-    mesh.matname = GetMaterialName(m->mMaterialIndex);//材质名称
+    mesh.name = std::string( name.data, name.length );//mesh名
+    mesh.matname = GetMaterialName(m->mMaterialIndex);//mesh的材质名称
 
-    mesh.faces.resize(m->mNumFaces);
+    mesh.faces.resize(m->mNumFaces);//设置mesh面数量
 
-    for(unsigned int i = 0; i < m->mNumFaces; ++i) {
-        const aiFace& f = m->mFaces[i];
+    for(unsigned int i = 0; i < m->mNumFaces; ++i) {//mesh中逐个面处理，赋值面到mesh中
+        const aiFace& f = m->mFaces[i];//assimp中定义的aiFace
 
-        Face& face = mesh.faces[i];
-        switch (f.mNumIndices) {
+        Face& face = mesh.faces[i];//objexporter中定义的face
+        switch (f.mNumIndices) {//复制face中类型
             case 1:
                 face.kind = 'p';//点
                 break;
@@ -361,28 +363,28 @@ void ObjExporter::AddMesh(const aiString& name, const aiMesh* m, const aiMatrix4
             default:
                 face.kind = 'f';//面
         }
-        face.indices.resize(f.mNumIndices);
+        face.indices.resize(f.mNumIndices);//设置顶点数量
 
         for(unsigned int a = 0; a < f.mNumIndices; ++a) {
-            const unsigned int idx = f.mIndices[a];
+            const unsigned int idx = f.mIndices[a];//逐个顶点索引赋值
 
-            aiVector3D vert = mat * m->mVertices[idx];
+            aiVector3D vert = mat * m->mVertices[idx];//计算全局下顶点坐标
 
-            if ( nullptr != m->mColors[ 0 ] ) {
+            if ( nullptr != m->mColors[ 0 ] ) {//顶点颜色存在
                 aiColor4D col4 = m->mColors[ 0 ][ idx ];
-                face.indices[a].vp = mVpMap.getIndex({vert, aiColor3D(col4.r, col4.g, col4.b)});
+                face.indices[a].vp = mVpMap.getIndex({vert, aiColor3D(col4.r, col4.g, col4.b)});//根据键找值，这里的键是6个元素的vertexData
             } else {
                 face.indices[a].vp = mVpMap.getIndex({vert, aiColor3D(0,0,0)});
             }
 
-            if (m->mNormals) {
+            if (m->mNormals) { //面法向存在
                 aiVector3D norm = aiMatrix3x3(mat) * m->mNormals[idx];
                 face.indices[a].vn = mVnMap.getIndex(norm);
             } else {
                 face.indices[a].vn = 0;
             }
 
-            if ( m->mTextureCoords[ 0 ] ) {
+            if ( m->mTextureCoords[ 0 ] ) {  //面纹理坐标存在
                 face.indices[a].vt = mVtMap.getIndex(m->mTextureCoords[0][idx]);
             } else {
                 face.indices[a].vt = 0;
@@ -393,16 +395,16 @@ void ObjExporter::AddMesh(const aiString& name, const aiMesh* m, const aiMatrix4
 
 // ------------------------------------------------------------------------------------------------
 void ObjExporter::AddNode(const aiNode* nd, const aiMatrix4x4& mParent) {//递归添加节点，及其子节点。
-    const aiMatrix4x4& mAbs = mParent * nd->mTransformation;
+    const aiMatrix4x4& mAbs = mParent * nd->mTransformation;//到此节点时累计的变换矩阵（相当于将局部相对变换改成全局坐标下的变换）
 
-    aiMesh *cm( nullptr );
-	for (unsigned int i = 0; i < nd->mNumMeshes; ++i) {//添加nd指向的mesh
+    aiMesh *cm( nullptr );//cm指向“nd所指向节点的”mesh
+	for (unsigned int i = 0; i < nd->mNumMeshes; ++i) {//md节点逐个mesh处理
 		cm = pScene->mMeshes[nd->mMeshes[i]];//cm=nd指向的mesh列表中的某个mesh
 		if (nullptr != cm) {
 			AddMesh(cm->mName, pScene->mMeshes[nd->mMeshes[i]], mAbs);
 		}
-		else {
-			AddMesh(nd->mName, pScene->mMeshes[nd->mMeshes[i]], mAbs);//node指向的mesh序号不存在//？
+		else {	//nd节点的某个mesh不存在？
+			AddMesh(nd->mName, pScene->mMeshes[nd->mMeshes[i]], mAbs);//输入节点名字（如果节点mesh找不到，用节点名字替代mesh，名）
 		}
 	}
 

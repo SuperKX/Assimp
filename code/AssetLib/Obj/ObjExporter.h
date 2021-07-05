@@ -71,7 +71,7 @@ public:
     
     /// public string-streams to write all output into
 	//public 字符串输出写出所有output
-    std::ostringstream mOutput, mOutputMat;//区别？
+    std::ostringstream mOutput, mOutputMat;//mOutputMat材质文件
 
 private:
     // intermediate data structures //中间的数据结构
@@ -84,7 +84,7 @@ private:
         }
 
         // one-based, 0 means: 'does not exist'
-        unsigned int vp, vn, vt; //顶点、法线、纹理的索引
+        unsigned int vp, vn, vt; //面的：顶点、法线、纹理的索引
     };
 
     struct Face { //面
@@ -93,7 +93,7 @@ private:
     };
 
     struct MeshInstance { //mesh索引
-        std::string name, matname;//mesh及材质名
+        std::string name, matname;//name是mesh名字；matname为纹理坐标名（如果没有材质的时候使用）
         std::vector<Face> faces;//面构成mesh
     };
 
@@ -109,14 +109,14 @@ private:
     const aiScene* const pScene;//场景
 
     struct vertexData {  //顶点数据：一个向量，一个颜色
-        aiVector3D vp;
+        aiVector3D vp;//顶点
         aiColor3D vc; // OBJ does not support 4D color//obj不支持4d颜色
     };
 
-    std::vector<aiVector3D> vn, vt;
-    std::vector<aiColor4D> vc;
-    std::vector<vertexData> vp;
-    bool useVc;
+    std::vector<aiVector3D> vn, vt; //vn法向；vt贴图坐标
+    std::vector<aiColor4D> vc; //顶点颜色
+    std::vector<vertexData> vp;//顶点坐标
+    bool useVc; //是否使用顶点颜色
 
     struct vertexDataCompare {
         bool operator() ( const vertexData& a, const vertexData& b ) const {
@@ -150,10 +150,10 @@ private:
         }
     };
 
-    template <class T, class Compare = std::less<T>>
+    template <class T, class Compare = std::less<T>> //类模板，建立一个T与int类型对应的map类。//键为T，值为int，map第三个元素为compate
     class indexMap {
         int mNextIndex;
-        typedef std::map<T, int, Compare> dataType;
+        typedef std::map<T, int, Compare> dataType;//值为int类型
         dataType vecMap;
     
     public:
@@ -162,13 +162,13 @@ private:
             // empty
         }
 
-        int getIndex(const T& key) {
+        int getIndex(const T& key) { //根据键找值
             typename dataType::iterator vertIt = vecMap.find(key);
             // vertex already exists, so reference it
             if(vertIt != vecMap.end()){
                 return vertIt->second;
             }
-            return vecMap[key] = mNextIndex++;
+            return vecMap[key] = mNextIndex++;//返回当前索引位置
         };
 
         void getKeys( std::vector<T>& keys ) {
@@ -180,7 +180,7 @@ private:
     };
 
     indexMap<aiVector3D, aiVectorCompare> mVnMap, mVtMap;
-    indexMap<vertexData, vertexDataCompare> mVpMap;
+    indexMap<vertexData, vertexDataCompare> mVpMap;//三维点map？//vertexData包含6个元素{vc，vp}，对应的值为其排序位置？
     std::vector<MeshInstance> mMeshes;//mesh列表
 
     // this endl() doesn't flush() the stream

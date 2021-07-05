@@ -71,6 +71,7 @@ extern "C" {
 
 /** @def AI_MAX_FACE_INDICES
  *  Maximum number of indices per face (polygon). */
+	//每个面最大数量的索引
 
 #ifndef AI_MAX_FACE_INDICES
 #define AI_MAX_FACE_INDICES 0x7fff
@@ -99,6 +100,7 @@ extern "C" {
 
 /** @def AI_MAX_NUMBER_OF_COLOR_SETS
  *  Supported number of vertex color sets per mesh. */
+	//每个mesh支持的顶点颜色集合数量
 
 #ifndef AI_MAX_NUMBER_OF_COLOR_SETS
 #define AI_MAX_NUMBER_OF_COLOR_SETS 0x8
@@ -134,7 +136,7 @@ extern "C" {
  * more information on the layout and winding order of a face.
  */
 struct aiFace {
-    //! Number of indices defining this face.
+    //! Number of indices defining this face.	//定义这个面的索引数，如p-点，l-线，f-面
     //! The maximum value for this member is #AI_MAX_FACE_INDICES.
     unsigned int mNumIndices;
 
@@ -431,7 +433,7 @@ struct aiAnimMesh {
      *  meshes may neither add or nor remove vertex components (if
      *  a replacement array is nullptr and the corresponding source
      *  array is not, the source data is taken instead)*/
-    C_STRUCT aiVector3D *mVertices;
+    C_STRUCT aiVector3D *mVertices; 
 
     /** Replacement for aiMesh::mNormals.  */
     C_STRUCT aiVector3D *mNormals;
@@ -443,7 +445,7 @@ struct aiAnimMesh {
     C_STRUCT aiVector3D *mBitangents;
 
     /** Replacement for aiMesh::mColors */
-    C_STRUCT aiColor4D *mColors[AI_MAX_NUMBER_OF_COLOR_SETS];
+    C_STRUCT aiColor4D *mColors[AI_MAX_NUMBER_OF_COLOR_SETS];//指针数组，存放8个指向颜色的指针。
 
     /** Replacement for aiMesh::mTextureCoords */
     C_STRUCT aiVector3D *mTextureCoords[AI_MAX_NUMBER_OF_TEXTURECOORDS];
@@ -596,7 +598,7 @@ struct aiMesh {
     * This array is always present in a mesh. The array is
     * mNumVertices in size.
     */
-    C_STRUCT aiVector3D *mVertices;
+    C_STRUCT aiVector3D *mVertices;//顶点坐标
 
     /** Vertex normals.
     * The array contains normalized vectors, nullptr if not present.
@@ -647,6 +649,7 @@ struct aiMesh {
     * A mesh may contain 0 to #AI_MAX_NUMBER_OF_COLOR_SETS vertex
     * colors per vertex. nullptr if not present. Each array is
     * mNumVertices in size if present.
+	//一个网格可以包含0到#AI_MAX_NUMBER_OF_COLOR_SETS每个顶点的顶点颜色。Nullptr如果不存在。如果存在，每个数组的大小是mNumVertices。
     */
     C_STRUCT aiColor4D *mColors[AI_MAX_NUMBER_OF_COLOR_SETS];
 
